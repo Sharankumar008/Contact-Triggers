@@ -1,0 +1,55 @@
+trigger ContactTrigger on Contact(After Insert,After update,After Delete,After Undelete){
+    Switch on Trigger.operationType{
+        when BEFORE_INSERT{
+            
+        }
+        when BEFORE_UPDATE{
+            
+        }
+        when AFTER_INSERT{
+            updateCountOfContacts(trigger.new);
+        }
+        when AFTER_UPDATE{
+            updateCountOfContacts(trigger.new);
+        }
+        when BEFORE_DELETE{
+            
+        }
+        when AFTER_DELETE{
+            updateCountOfContacts(trigger.old);
+        }
+        when AFTER_UNDELETE{
+            updateCountOfContacts(trigger.new);
+        }
+    }
+    public static void updateCountOfContacts(List<Contact> contactList){
+        Set<Id> AccId=new Set<Id>();
+        for(Contact contactRecord:contactList){
+            if(contactRecord.AccountId!=null){
+                AccId.add(contactRecord.AccountId);
+                //System.debug('1');
+            }
+        }
+        System.debug(accId);
+        if(accId.size()>0){
+            //System.debug('2');
+            List<AggregateResult> agResult=[Select Count(Id) noOfContacts,AccountId 
+                                            from Contact 
+                                            where AccountId in:AccId 
+                                            Group by AccountId];
+            //System.debug(agResult);
+            List<Account> accountList=new List<Account>();
+            for(AggregateResult ar:agResult){
+                Account accountRecord=new Account();
+                accountRecord.Id=(Id)ar.get('AccountId');
+                accountRecord.Total_Contacts__c=(Decimal)ar.get('noOfContacts');
+                accountList.add(accountRecord);
+            }
+            //System.debug(accountList);
+            if(!accountList.isEmpty()){
+                //System.debug('3');
+                update accountList;
+            }
+        } 
+    }
+}
